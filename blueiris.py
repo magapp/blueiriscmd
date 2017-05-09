@@ -80,9 +80,12 @@ class BlueIris:
         args = {"session": self.session, "response": self.response, "cmd": cmd}
         args.update(params)
 
+        # print self.url
+        # print json.dumps(args)
         r = requests.post(self.url, data=json.dumps(args))
 
-        if r.status_code != 200 or r.json()["result"] != "success":
+        # if r.status_code != 200 or r.json()["result"] != "success":
+        if r.status_code != 200:
             print r.status_code
             print r.text
             sys.exit(1)
