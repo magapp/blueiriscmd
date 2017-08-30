@@ -3,7 +3,7 @@ blueiriscmd
 
 Python cmd tool that talk with Blue Iris Camera surveillance software API.
 
-Blue Iris have an API that allows other programs to read status, trigger events, change profile and such. This python tool gives you a command line tool that can be used.
+Blue Iris have an API that allows other programs to read status, trigger events, change profile, set signal and such. This python tool gives you a command line tool that can be used.
 
 Example to change current profile to "Home":
 

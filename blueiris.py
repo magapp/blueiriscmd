@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Print debug messages')
     parser.add_argument('--list-profiles', action='store_true', help='List all available profiles')
     parser.add_argument('--set-profile', action='store', help='Set current profile', metavar='profile-name', default=None)
+    parser.add_argument('--set-signal', action='store', help='Set current signal', metavar='signal-name', default=None, choices=['red','yellow','green'])
     parser.add_argument('--trigger', action='store', help='Trigger camera', metavar='camera-short-name', default=None)
 
     args = parser.parse_args()
@@ -24,6 +25,8 @@ def main():
     bi = BlueIris(args.host, args.user, args.password, args.debug)
     current_profile = bi.get_profile()
     print "Profile '%s' is active" % current_profile
+    current_signal = bi.get_signal()
+    print "Signal is %s" % current_signal
 
     if args.list_profiles:
         print "Available profiles are:"
@@ -38,6 +41,11 @@ def main():
         print "Setting active profile to '%s' (id: %d)" % (args.set_profile, profile_id)
         bi.cmd("status", {"profile": profile_id})
 
+    if args.set_signal:
+        signal = bi.get_signal()
+        print "Switching signal %s -> %s" % (signal, args.set_signal)
+        bi.set_signal(args.set_signal)
+
     if args.trigger:
         print "Triggering camera '%s'" % args.trigger
         bi.cmd("trigger", {"camera": args.trigger})
@@ -48,6 +56,7 @@ def main():
 class BlueIris:
     session = None
     response = None
+    signals = ['red', 'green', 'yellow']
 
     def __init__(self, host, user, password, debug=False):
         self.host = host
@@ -104,6 +113,15 @@ class BlueIris:
         if profile_id == -1:
             return "Undefined"
         return self.profiles_list[profile_id]
+
+    def get_signal(self):
+        r = self.cmd("status")
+        signal_id = int(r["signal"])
+        return self.signals[signal_id]
+
+    def set_signal(self, signal_name):
+        signal_id = self.signals.index(signal_name)
+        self.cmd("status", {"signal": signal_id})
 
     def logout(self):
         self.cmd("logout")
