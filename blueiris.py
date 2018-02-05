@@ -74,7 +74,7 @@ def main():
             print "Using --ptzcmdnum requires argument --ptzcam with valid Cam Name.."
             sys.exit(0)
         print "Sending PTZ Command Button:" + args.ptzbutton + " to Cam: " + args.ptzcam
-        bi.cmd("ptz", {"camera": args.ptzcam,"button": args.ptzbutton,"updown": "1"})
+        bi.cmd("ptz", {"camera": args.ptzcam,"button": int(args.ptzbutton),"updown": 0})
 
     bi.logout()
     sys.exit(0)
