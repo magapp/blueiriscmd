@@ -116,8 +116,8 @@ class BlueIris:
         args.update(params)
 
         # print self.url
-        print "Sending Data: "
-        print json.dumps(args)
+        # print "Sending Data: "
+        # print json.dumps(args)
         r = requests.post(self.url, data=json.dumps(args))
 
         if r.status_code != 200:
@@ -125,8 +125,9 @@ class BlueIris:
             print r.text
             sys.exit(1)
         else:
-            print "success: " + str(r.status_code)
-            print r.text
+            pass
+            #print "success: " + str(r.status_code)
+            #print r.text
 
         if self.debug:
             print str(r.json())
