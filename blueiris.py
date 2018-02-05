@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--set-schedule', action='store', help='Set current schedule', metavar='schedule-name', default=None)
     parser.add_argument('--set-signal', action='store', help='Set current signal', metavar='signal-name', default=None, choices=['red','yellow','green'])
     parser.add_argument('--trigger', action='store', help='Trigger camera', metavar='camera-short-name', default=None)
+    parser.add_argument('--ptzbutton', action='store', help='Send PTZ Button Number', metavar='ptz-button-name', default=None)
+    parser.add_argument('--ptzcam', action='store', help='Send PTZ Command', metavar='ptz-cam-name', default=None)
 
     args = parser.parse_args()
 
@@ -54,6 +56,25 @@ def main():
     if args.trigger:
         print "Triggering camera '%s'" % args.trigger
         bi.cmd("trigger", {"camera": args.trigger})
+        
+    if args.ptzbutton:
+        #0: Pan left
+        #1: Pan right
+        #2: Tilt up
+        #3: Tilt down
+        #4: Center or home (if supported by camera)
+        #5: Zoom in
+        #6: Zoom out
+        #8..10: Power mode, 50, 60, or outdoor
+        #11..26: Brightness 0-15
+        #27..33: Contrast 0-6
+        #34..35: IR on, off
+        #101..120: Go to preset position 1..20
+        if not args.ptzcam:
+            print "Using --ptzcmdnum requires argument --ptzcam with valid Cam Name.."
+            sys.exit(0)
+        print "Sending PTZ Command Button:" + args.ptzbutton + " to Cam: " + args.ptzcam
+        bi.cmd("ptz", {"camera": args.ptzcam,"button": args.ptzbutton,"updown": "1"})
 
     bi.logout()
     sys.exit(0)
@@ -95,14 +116,17 @@ class BlueIris:
         args.update(params)
 
         # print self.url
-        # print json.dumps(args)
+        print "Sending Data: "
+        print json.dumps(args)
         r = requests.post(self.url, data=json.dumps(args))
 
-        # if r.status_code != 200 or r.json()["result"] != "success":
         if r.status_code != 200:
             print r.status_code
             print r.text
             sys.exit(1)
+        else:
+            print "success: " + str(r.status_code)
+            print r.text
 
         if self.debug:
             print str(r.json())
