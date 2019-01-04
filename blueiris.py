@@ -69,14 +69,14 @@ class BlueIris:
 
     @property
     def active_profile(self):
-        profile_id = int(getattr(self.status, 'profile'))
+        profile_id = int(self.status.get('profile'))
         if profile_id == -1:
             return "Undefined"
         return self._profiles_list[profile_id]
 
     @property
     def active_signal(self):
-        signal_id = int(getattr(self.status, 'signal'))
+        signal_id = int(self.status.get('signal'))
         return SIGNALS[signal_id]
 
     def set_signal(self, signal_name):
