@@ -16,12 +16,8 @@ SIGNALS = ['red', 'green', 'yellow']
 class BlueIris:
 
     def __init__(self, protocol, host, user, password, debug=False):
-        self.host = host
-        self.user = user
-        self.password = password
         self.debug = debug
         self.url = "{}://{}/json".format(protocol, host)
-
         self.session = requests.session()
 
         """Send login command"""
@@ -42,10 +38,20 @@ class BlueIris:
         if r.status_code != 200 or r.json()["result"] != "success":
             _LOGGER.error("Unsuccessful response. {}:{}".format(r.status_code, r.text))
         else:
-            self.system_name = r.json()["data"]["system name"]
-            self.profiles_list = r.json()["data"]["profiles"]
+            self._system_name = r.json()["data"]["system name"]
+            self._profiles_list = r.json()["data"]["profiles"]
 
-            _LOGGER.info("Connected to '{}'".format(self.system_name))
+            _LOGGER.info("Connected to '{}'".format(self._system_name))
+
+    @property
+    def system_name(self):
+        """Return the system name"""
+        return self._system_name
+
+    @property
+    def profiles_list(self):
+        """Return the list of profiles"""
+        return self._profiles_list
 
 
     def cmd(self, cmd, params=None):
@@ -54,9 +60,6 @@ class BlueIris:
         args = {"session": self.sessionid, "response": self.response, "cmd": cmd}
         args.update(params)
 
-        # print self.url
-        # print "Sending Data: "
-        # print json.dumps(args)
         r = self.session.post(self.url, data=json.dumps(args))
         self.status = r.status_code
         if r.status_code != 200:
@@ -70,19 +73,22 @@ class BlueIris:
         except KeyError:
             return r.json()
 
-    def get_profile(self):
+    @property
+    def active_profile(self):
         r = self.cmd("status")
         profile_id = int(r["profile"])
         if profile_id == -1:
             return "Undefined"
-        return self.profiles_list[profile_id]
+        return self._profiles_list[profile_id]
 
-    def get_signal(self):
+    @property
+    def active_signal(self):
         r = self.cmd("status")
         signal_id = int(r["signal"])
         return SIGNALS[signal_id]
 
-    def get_schedule(self):
+    @property
+    def active_schedule(self):
         r = self.cmd("status")
         schedule = r["schedule"]
         return schedule
