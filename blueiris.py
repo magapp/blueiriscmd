@@ -13,6 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SIGNALS = ['red', 'green', 'yellow']
 
+
 class BlueIris:
 
     def __init__(self, protocol, host, user, password, debug=False):
@@ -22,26 +23,16 @@ class BlueIris:
 
         """Send login command"""
         r = self.session.post(self.url, data=json.dumps({"cmd": "login"}))
-        self.status = r.status_code
         if r.status_code != 200:
-            _LOGGER.error("Unsuccessful response. {}:{}".format(r.status_code, r.text))
+            print("Unsuccessful response. {}:{}".format(r.status_code, r.text))
 
         """Calculate login response"""
         self.sessionid = r.json()["session"]
         self.response = hashlib.md5("{}:{}:{}".format(user, self.sessionid, password).encode('utf-8')).hexdigest()
         if self.debug:
-            _LOGGER.debug("session: {} response: {}".format(self.sessionid, self.response))
-        """Send hashed username/password to validate session"""
-        r = self.session.post(self.url,
-                              data=json.dumps({"cmd": "login", "session": self.sessionid, "response": self.response}))
-        self.status = r.status_code
-        if r.status_code != 200 or r.json()["result"] != "success":
-            _LOGGER.error("Unsuccessful response. {}:{}".format(r.status_code, r.text))
-        else:
-            self._system_name = r.json()["data"]["system name"]
-            self._profiles_list = r.json()["data"]["profiles"]
+            print("session: {} response: {}".format(self.sessionid, self.response))
 
-            _LOGGER.info("Connected to '{}'".format(self._system_name))
+        self.login()
 
     @property
     def system_name(self):
@@ -54,24 +45,39 @@ class BlueIris:
         return self._profiles_list
 
     @property
-    def active_profile(self):
+    def camera_list(self):
+        """Return the list of profiles"""
+        r = self.cmd("camlist")
+        return r
+
+    @property
+    def alert_list(self):
+        """Return the list of alert pictures"""
+        r = self.cmd("alertlist", {"camera": "index"})
+        return r
+
+    @property
+    def clip_list(self):
+        """Return the list of alert pictures"""
+        r = self.cmd("cliplist", {"camera": "index"})
+        return r
+
+    @property
+    def status(self):
         r = self.cmd("status")
-        profile_id = int(r["profile"])
+        return r
+
+    @property
+    def active_profile(self):
+        profile_id = int(getattr(self.status, 'profile'))
         if profile_id == -1:
             return "Undefined"
         return self._profiles_list[profile_id]
 
     @property
     def active_signal(self):
-        r = self.cmd("status")
-        signal_id = int(r["signal"])
+        signal_id = int(getattr(self.status, 'signal'))
         return SIGNALS[signal_id]
-
-    @property
-    def active_schedule(self):
-        r = self.cmd("status")
-        schedule = r["schedule"]
-        return schedule
 
     def set_signal(self, signal_name):
         signal_id = SIGNALS.index(signal_name)
@@ -90,14 +96,29 @@ class BlueIris:
         args.update(params)
 
         r = self.session.post(self.url, data=json.dumps(args))
-        self.status = r.status_code
         if r.status_code != 200:
-            _LOGGER.error("Unsuccessful response. {}:{}".format(r.status_code, r.text))
+            print("Unsuccessful response. {}:{}".format(r.status_code, r.text))
 
         if self.debug:
-            _LOGGER.debug(str(r.json()))
+            print(str(r.json()))
 
         try:
             return r.json()["data"]
         except KeyError:
-            return r.json()
+            """It's possible that there was no data to be returned. In that case respond 'None'"""
+            if r.json()["result"] == "success":
+                return "None"
+            """Respond with 'Error' in the even we get here and had a bad result"""
+            return "Error"
+
+    def login(self):
+        """Send hashed username/password to validate session"""
+        r = self.session.post(self.url,
+                              data=json.dumps({"cmd": "login", "session": self.sessionid, "response": self.response}))
+        if r.status_code != 200 or r.json()["result"] != "success":
+            print("Unsuccessful response. {}:{}".format(r.status_code, r.text))
+        else:
+            self._system_name = r.json()["data"]["system name"]
+            self._profiles_list = r.json()["data"]["profiles"]
+
+            print("Connected to '{}'".format(self._system_name))
