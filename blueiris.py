@@ -220,16 +220,16 @@ class BlueIris:
 
     @property
     def profile(self):
-        if len(self.status) < 2:
-            return "Error"
-        profile_id = int(self.status.get('profile'))
+        profile_id = int(self.status.get('profile', -1))
         if profile_id == -1:
             return "Undefined"
         return self._profiles[profile_id]
 
     @property
     def signal(self):
-        signal_id = int(self.status.get('signal', default=4))
+        signal_id = int(self.status.get('signal', -1))
+        if signal_id == -1:
+            return "Error"
         return SIGNALS[signal_id]
 
     def set_signal(self, signal_name):
