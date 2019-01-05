@@ -103,6 +103,8 @@ class BlueIris:
         self.response = UNKNOWN_HASH
         self._status = UNKNOWN_DICT
         self._camlist = UNKNOWN_LIST
+        self._camcodes = []
+        self._camnames = []
         self._alertlist = UNKNOWN_LIST
         self._cliplist = UNKNOWN_LIST
         self._profiles = UNKNOWN_LIST
@@ -113,13 +115,13 @@ class BlueIris:
         session_info = self.login()
         if self.debug:
             print("Session info: {}".format(session_info))
-        self._name = session_info.get('system name', default=UNKNOWN_STRING)
-        self._profiles = session_info.get('profiles', default=UNKNOWN_LIST)
-        self._am_admin = session_info.get('admin', default=False)
-        self._ptz_allowed = session_info.get('ptz', default=False)
-        self._clips_allowed = session_info.get('clips', default=False)
-        self._schedules = session_info.get('schedules', default=UNKNOWN_LIST)
-        self._version = session_info.get('version', default=UNKNOWN_STRING)
+        self._name = session_info.get('system name', UNKNOWN_STRING)
+        self._profiles = session_info.get('profiles', UNKNOWN_LIST)
+        self._am_admin = session_info.get('admin', False)
+        self._ptz_allowed = session_info.get('ptz', False)
+        self._clips_allowed = session_info.get('clips', False)
+        self._schedules = session_info.get('schedules', UNKNOWN_LIST)
+        self._version = session_info.get('version', UNKNOWN_STRING)
         self.update_status()
 
     def generate_response(self):
@@ -134,6 +136,11 @@ class BlueIris:
     def update_camlist(self):
         """Run the command to refresh our stored status"""
         self._camlist = self.cmd("camlist")
+        self._camcodes = []
+        self._camnames = []
+        for cam in self._camlist:
+            self._camcodes.append(cam.get('optionValue'))
+            self._camnames.append(cam.get('optionDisplay'))
 
     def update_cliplist(self):
         """Run the command to refresh our stored status"""
@@ -180,10 +187,9 @@ class BlueIris:
         if self._camlist == UNKNOWN_LIST:
             self.update_camlist()
         shortlist = []
-        for cam in self._camlist:
-            if cam.get('optionValue') != 'Index' and cam.get('optionValue') != '@Index':
-                shortlist.append({'name': cam.get('optionDisplay'), 'code': cam.get('optionValue')})
-        return shortlist
+        for x in range (0, len(self._camcodes)):
+            shortlist.append({'name': self._camnames[x], 'code': self._camcodes[x]})
+        return
 
     @property
     def all_alerts(self):
@@ -233,6 +239,9 @@ class BlueIris:
 
     def toggle_schedule_hold(self):
         self.cmd("status", {"schedule": -1})
+
+    def ptz(self, camera_code, ptz_action):
+        return
 
     def logout(self):
         self.cmd("logout")
