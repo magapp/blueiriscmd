@@ -79,6 +79,12 @@ CONFIG_PAUSE_ADD_30_SEC = 1
 CONFIG_PAUSE_ADD_1_MIN = 2
 CONFIG_PAUSE_ADD_1_HOUR = 3
 
+LOG_SEVERITY_INFO = 'INFO'
+LOG_SEVERITY_WARN = 'WARNING'
+LOG_SEVERITY_ERROR = 'ERROR'
+
+LOG_SEVERITY = [LOG_SEVERITY_INFO, LOG_SEVERITY_WARN, LOG_SEVERITY_ERROR]
+
 UNKNOWN_STATUS = {"Unknown"}
 UNKNOWN_LIST = []
 UNKNOWN_HASH = -1
@@ -101,6 +107,7 @@ class BlueIris:
         self._alertlist = UNKNOWN_LIST
         self._cliplist = UNKNOWN_LIST
         self._profiles = UNKNOWN_LIST
+        self._log = UNKNOWN_LIST
         self.session = requests.session()
         self.debug = debug
         """Do login"""
@@ -131,10 +138,21 @@ class BlueIris:
         """Run the command to refresh our stored status"""
         self._alertlist = self.cmd("alertlist", {"camera": "index"})
 
+    def update_log(self):
+        """Run the command to refresh our stored log value"""
+        self._log = self.cmd("log")
+
     @property
     def name(self):
         """Return the system name"""
         return self._name
+
+    @property
+    def log(self):
+        """Return the system log"""
+        if self._log == UNKNOWN_LIST:
+            self.update_log()
+        return self._log
 
     @property
     def profiles(self):
