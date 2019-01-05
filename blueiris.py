@@ -7,94 +7,126 @@ import hashlib
 import json
 import requests
 
-SIGNAL_RED = 'red'
-SIGNAL_YELLOW = 'yellow'
-SIGNAL_GREEN = 'green'
-
-SIGNALS = [SIGNAL_RED, SIGNAL_GREEN, SIGNAL_YELLOW]
-
-PTZ_PAN_LEFT = 0
-PTZ_PAN_RIGHT = 1
-PTZ_TILT_UP = 2
-PTZ_TILT_DOWN = 3
-PTZ_CENTER = PTZ_HOME = 4
-PTZ_ZOOM_IN = 5
-PTZ_ZOOM_OUT = 6
-PTZ_POWER_50 = 8
-PTZ_POWER_60 = 9
-PTZ_POWER_OUTDOOR = 10
-PTZ_BRIGHTNESS_0 = 11
-PTZ_BRIGHTNESS_1 = 12
-PTZ_BRIGHTNESS_2 = 13
-PTZ_BRIGHTNESS_3 = 14
-PTZ_BRIGHTNESS_4 = 15
-PTZ_BRIGHTNESS_5 = 16
-PTZ_BRIGHTNESS_6 = 17
-PTZ_BRIGHTNESS_7 = 18
-PTZ_BRIGHTNESS_8 = 19
-PTZ_BRIGHTNESS_9 = 20
-PTZ_BRIGHTNESS_10 = 21
-PTZ_BRIGHTNESS_11 = 22
-PTZ_BRIGHTNESS_12 = 23
-PTZ_BRIGHTNESS_13 = 24
-PTZ_BRIGHTNESS_14 = 25
-PTZ_BRIGHTNESS_15 = 26
-PTZ_CONTRAST_0 = 27
-PTZ_CONTRAST_1 = 28
-PTZ_CONTRAST_2 = 29
-PTZ_CONTRAST_3 = 30
-PTZ_CONTRAST_4 = 31
-PTZ_CONTRAST_5 = 32
-PTZ_CONTRAST_6 = 33
-PTZ_IR_ON = 34
-PTZ_IR_OFF = 35
-PTZ_PRESET_1 = 101
-PTZ_PRESET_2 = 102
-PTZ_PRESET_3 = 103
-PTZ_PRESET_4 = 104
-PTZ_PRESET_5 = 105
-PTZ_PRESET_6 = 106
-PTZ_PRESET_7 = 107
-PTZ_PRESET_8 = 108
-PTZ_PRESET_9 = 109
-PTZ_PRESET_10 = 110
-PTZ_PRESET_11 = 111
-PTZ_PRESET_12 = 112
-PTZ_PRESET_13 = 113
-PTZ_PRESET_14 = 114
-PTZ_PRESET_15 = 115
-PTZ_PRESET_16 = 116
-PTZ_PRESET_17 = 117
-PTZ_PRESET_18 = 118
-PTZ_PRESET_19 = 119
-PTZ_PRESET_20 = 120
-
-PTZ_COMMANDS = [PTZ_PAN_LEFT, PTZ_PAN_RIGHT, PTZ_TILT_UP, PTZ_TILT_DOWN, PTZ_CENTER, PTZ_ZOOM_IN, PTZ_ZOOM_OUT,
-                PTZ_POWER_50, PTZ_POWER_60, PTZ_POWER_OUTDOOR, PTZ_BRIGHTNESS_0, PTZ_BRIGHTNESS_1, PTZ_BRIGHTNESS_2,
-                PTZ_BRIGHTNESS_3, PTZ_BRIGHTNESS_4, PTZ_BRIGHTNESS_5, PTZ_BRIGHTNESS_6, PTZ_BRIGHTNESS_7,
-                PTZ_BRIGHTNESS_8, PTZ_BRIGHTNESS_9, PTZ_BRIGHTNESS_10, PTZ_BRIGHTNESS_11, PTZ_BRIGHTNESS_12,
-                PTZ_BRIGHTNESS_13, PTZ_BRIGHTNESS_14, PTZ_BRIGHTNESS_15, PTZ_CONTRAST_0, PTZ_CONTRAST_1, PTZ_CONTRAST_2,
-                PTZ_CONTRAST_3, PTZ_CONTRAST_4, PTZ_CONTRAST_5, PTZ_CONTRAST_6, PTZ_IR_ON, PTZ_IR_OFF, PTZ_PRESET_1,
-                PTZ_PRESET_2, PTZ_PRESET_3, PTZ_PRESET_4, PTZ_PRESET_5, PTZ_PRESET_6, PTZ_PRESET_7, PTZ_PRESET_8,
-                PTZ_PRESET_9, PTZ_PRESET_10, PTZ_PRESET_11, PTZ_PRESET_12, PTZ_PRESET_13, PTZ_PRESET_14, PTZ_PRESET_15,
-                PTZ_PRESET_16, PTZ_PRESET_17, PTZ_PRESET_18, PTZ_PRESET_19, PTZ_PRESET_20]
-
-CONFIG_PAUSE_INDEFINITELY = -1
-CONFIG_PAUSE_CANCEL = 0
-CONFIG_PAUSE_ADD_30_SEC = 1
-CONFIG_PAUSE_ADD_1_MIN = 2
-CONFIG_PAUSE_ADD_1_HOUR = 3
-
-LOG_SEVERITY_INFO = 'INFO'
-LOG_SEVERITY_WARN = 'WARNING'
-LOG_SEVERITY_ERROR = 'ERROR'
-
-LOG_SEVERITY = [LOG_SEVERITY_INFO, LOG_SEVERITY_WARN, LOG_SEVERITY_ERROR]
+from enum import Enum
 
 UNKNOWN_DICT = {'-1': ''}
 UNKNOWN_LIST = [{'-1': ''}]
 UNKNOWN_HASH = -1
 UNKNOWN_STRING = "noname"
+
+
+class Signal(Enum):
+    RED = 0
+    YELLOW = 2
+    GREEN = 1
+
+    @classmethod
+    def has_value(cls, value):
+        if isinstance(value, str):
+            """We were provided a string, let's check it"""
+            return value in cls.__members__
+        else:
+            """Assume we were given an int corresponding to the value assigned in this class"""
+            return any(value == item.value for item in cls)
+
+
+class PTZCommand(Enum):
+    PAN_LEFT = 0
+    PAN_RIGHT = 1
+    TILT_UP = 2
+    TILT_DOWN = 3
+    CENTER = HOME = 4
+    ZOOM_IN = 5
+    ZOOM_OUT = 6
+    POWER_50 = 8
+    POWER_60 = 9
+    POWER_OUTDOOR = 10
+    BRIGHTNESS_0 = 11
+    BRIGHTNESS_1 = 12
+    BRIGHTNESS_2 = 13
+    BRIGHTNESS_3 = 14
+    BRIGHTNESS_4 = 15
+    BRIGHTNESS_5 = 16
+    BRIGHTNESS_6 = 17
+    BRIGHTNESS_7 = 18
+    BRIGHTNESS_8 = 19
+    BRIGHTNESS_9 = 20
+    BRIGHTNESS_10 = 21
+    BRIGHTNESS_11 = 22
+    BRIGHTNESS_12 = 23
+    BRIGHTNESS_13 = 24
+    BRIGHTNESS_14 = 25
+    BRIGHTNESS_15 = 26
+    CONTRAST_0 = 27
+    CONTRAST_1 = 28
+    CONTRAST_2 = 29
+    CONTRAST_3 = 30
+    CONTRAST_4 = 31
+    CONTRAST_5 = 32
+    CONTRAST_6 = 33
+    IR_ON = 34
+    IR_OFF = 35
+    PRESET_1 = 101
+    PRESET_2 = 102
+    PRESET_3 = 103
+    PRESET_4 = 104
+    PRESET_5 = 105
+    PRESET_6 = 106
+    PRESET_7 = 107
+    PRESET_8 = 108
+    PRESET_9 = 109
+    PRESET_10 = 110
+    PRESET_11 = 111
+    PRESET_12 = 112
+    PRESET_13 = 113
+    PRESET_14 = 114
+    PRESET_15 = 115
+    PRESET_16 = 116
+    PRESET_17 = 117
+    PRESET_18 = 118
+    PRESET_19 = 119
+    PRESET_20 = 120
+
+    @classmethod
+    def has_value(cls, value):
+        if isinstance(value, str):
+            """We were provided a string, let's check it"""
+            return value in cls.__members__
+        else:
+            """Assume we were given an int corresponding to the value assigned in this class"""
+            return any(value == item.value for item in cls)
+
+
+class CAMConfig(Enum):
+    PAUSE_INDEFINITELY = -1
+    PAUSE_CANCEL = 0
+    PAUSE_ADD_30_SEC = 1
+    PAUSE_ADD_1_MIN = 2
+    PAUSE_ADD_1_HOUR = 3
+
+    @classmethod
+    def has_value(cls, value):
+        if isinstance(value, str):
+            """We were provided a string, let's check it"""
+            return value in cls.__members__
+        else:
+            """Assume we were given an int corresponding to the value assigned in this class"""
+            return any(value == item.value for item in cls)
+
+
+class LogSeverity(Enum):
+    INFO = 0
+    WARN = 1
+    ERROR = 2
+
+    @classmethod
+    def has_value(cls, value):
+        if isinstance(value, str):
+            """We were provided a string, let's check it"""
+            return value in cls.__members__
+        else:
+            """Assume we were given an int corresponding to the value assigned in this class"""
+            return any(value == item.value for item in cls)
 
 
 class BlueIris:
@@ -226,13 +258,17 @@ class BlueIris:
         signal_id = int(self.status.get('signal', -1))
         if signal_id == -1:
             return "Error"
-        return SIGNALS[signal_id]
+        return Signal(signal_id)
 
-    def set_signal(self, signal_name):
-        if signal_name not in SIGNALS:
-            print("Unable to set signal to unknown value {}. (Use the SIGNAL_ constants)".format(signal_name))
+    def set_signal(self, signal):
+        if not Signal.has_value(signal):
+            print("Unable to set signal to unknown value {}. (Use one of {})".format(signal,
+                                                                                     Signal.__members__.keys()))
         else:
-            self.cmd("status", {"signal": SIGNALS.index(signal_name)})
+            if isinstance(signal, str):
+                self.cmd("status", {"signal": Signal.__members__.get(signal)})
+            else:
+                self.cmd("status", {"signal": signal})
 
     def set_schedule(self, schedule_name):
         if schedule_name not in self._schedules:
@@ -254,10 +290,13 @@ class BlueIris:
         """Execute a PTZ command on a camera"""
         if camera_code not in self._camcodes:
             print("Bad camera code '{}'. (Use one of {})".format(camera_code, self._camcodes))
-        elif ptz_action not in PTZ_COMMANDS:
-            print("Bad PTZ command {}. (Use the PTZ_ constants)".format(ptz_action))
+        elif not PTZCommand.has_value(ptz_action):
+            print("Bad PTZ command {}. (Use one of {})".format(ptz_action, PTZCommand.__members__.keys()))
         else:
-            self.cmd("ptz", {"camera": camera_code, "button": ptz_action, "updown": 0})
+            if isinstance(ptz_action, str):
+                self.cmd("ptz", {"camera": camera_code, "button": PTZCommand.__members__.get(ptz_action), "updown": 0})
+            else:
+                self.cmd("ptz", {"camera": camera_code, "button": ptz_action, "updown": 0})
 
     def trigger(self, camera_code):
         """Trigger the motion sensor on a specific camera"""
