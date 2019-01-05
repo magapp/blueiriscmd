@@ -85,8 +85,8 @@ LOG_SEVERITY_ERROR = 'ERROR'
 
 LOG_SEVERITY = [LOG_SEVERITY_INFO, LOG_SEVERITY_WARN, LOG_SEVERITY_ERROR]
 
-UNKNOWN_DICT = {'state': 'Unknown'}
-UNKNOWN_LIST = ["Unknown"]
+UNKNOWN_DICT = {'-1': ''}
+UNKNOWN_LIST = [{'-1': ''}]
 UNKNOWN_HASH = -1
 UNKNOWN_NAME = "noname"
 
@@ -165,7 +165,6 @@ class BlueIris:
         if self._camlist == UNKNOWN_LIST:
             self.update_camlist()
         shortlist = []
-        cam: dict
         for cam in self._camlist:
             if cam.get('optionValue') != 'Index' and cam.get('optionValue') != '@Index':
                 shortlist.append({'name': cam.get('optionDisplay'), 'code': cam.get('optionValue')})
