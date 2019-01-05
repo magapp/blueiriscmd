@@ -88,8 +88,8 @@ class BlueIris:
         self.url = "{}://{}/json".format(protocol, host)
         self.user = user
         self.password = password
-        self.blueiris_session = 0
-        self.response = 0
+        self.blueiris_session = -1
+        self.response = -1
         self.system_name = ""
         self.profile_list = []
         self.session = requests.session()
