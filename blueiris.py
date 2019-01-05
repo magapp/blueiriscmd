@@ -85,33 +85,35 @@ class BlueIris:
     def __init__(self, user, password, protocol, host, port="", debug=False):
         if port != "":
             host = "{}:{}".format(host, port)
-
-        self.debug = debug
         self.url = "{}://{}/json".format(protocol, host)
+        self.user = user
+        self.password = password
+        self.blueiris_session = 0
+        self.response = 0
+        self.system_name = ""
+        self.profile_list = []
         self.session = requests.session()
+        self.debug = debug
+        """Do login"""
+        server = self.login()
+        if len(server) > 0:
+            self.system_name = server[0]
+            self.profile_list = server[1]
 
-        """Send login command"""
-        r = self.session.post(self.url, data=json.dumps({"cmd": "login"}))
-        if r.status_code != 200:
-            print("Unsuccessful response. {}:{}".format(r.status_code, r.text))
-
-        """Calculate login response"""
-        self.sessionid = r.json()["session"]
-        self.response = hashlib.md5("{}:{}:{}".format(user, self.sessionid, password).encode('utf-8')).hexdigest()
-        if self.debug:
-            print("session: {} response: {}".format(self.sessionid, self.response))
-
-        self.login()
+    def update_response(self):
+        """Update self.username, self.password and self.blueiris_session before calling this."""
+        self.response = hashlib.md5(
+            "{}:{}:{}".format(self.user, self.blueiris_session, self.password).encode('utf-8')).hexdigest()
 
     @property
     def name(self):
         """Return the system name"""
-        return self._system_name
+        return self.system_name
 
     @property
     def all_profiles(self):
         """Return the list of profiles"""
-        return self._profiles_list
+        return self.profile_list
 
     @property
     def all_cameras(self):
@@ -141,7 +143,7 @@ class BlueIris:
         profile_id = int(self.status.get('profile'))
         if profile_id == -1:
             return "undefined"
-        return self._profiles_list[profile_id]
+        return self.profile_list[profile_id]
 
     @property
     def signal(self):
@@ -161,7 +163,7 @@ class BlueIris:
     def cmd(self, cmd, params=None):
         if params is None:
             params = dict()
-        args = {"session": self.sessionid, "response": self.response, "cmd": cmd}
+        args = {"session": self.blueiris_session, "response": self.response, "cmd": cmd}
         args.update(params)
 
         r = self.session.post(self.url, data=json.dumps(args))
@@ -181,13 +183,20 @@ class BlueIris:
             return "Error"
 
     def login(self):
-        """Send hashed username/password to validate session"""
-        r = self.session.post(self.url,
-                              data=json.dumps({"cmd": "login", "session": self.sessionid, "response": self.response}))
-        if r.status_code != 200 or r.json()["result"] != "success":
-            print("Unsuccessful response {} :{}".format(r.status_code, r.text))
+        """
+        Send hashed username/password to validate session
+        Returns system name and dictionary of profiles OR nothing
+        """
+        r = self.session.post(self.url, data=json.dumps({"cmd": "login"}))
+        if r.status_code != 200:
+            print("Bad response ({}) when trying to contact {}, {}".format(r.status_code, self.url, r.text))
         else:
-            self._system_name = r.json()["data"]["system name"]
-            self._profiles_list = r.json()["data"]["profiles"]
-
-            print("Connected to '{}'".format(self._system_name))
+            self.blueiris_session = r.json()["session"]
+            self.update_response()
+            r = self.session.post(self.url,
+                                  data=json.dumps(
+                                      {"cmd": "login", "session": self.blueiris_session, "response": self.response}))
+            if r.status_code != 200 or r.json()["result"] != "success":
+                print("Bad login {} :{}".format(r.status_code, r.text))
+                return []
+            return [r.json()["data"]["system name"], r.json()["data"]["profiles"]]
