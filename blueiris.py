@@ -244,6 +244,12 @@ class BlueIris:
         else:
             self.cmd("status", {"schedule": schedule_name})
 
+    def set_pofile(self, profile_name):
+        if profile_name not in self._profiles:
+            print("Bad profile name {}. (Use one of {})".format(profile_name, self._profiles))
+        else:
+            self.cmd("status", {"profile": profile_name})
+
     def toggle_schedule_hold(self):
         """Toggle the schedule to run/hold"""
         self.cmd("status", {"schedule": -1})
