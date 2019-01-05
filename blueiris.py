@@ -90,14 +90,15 @@ class BlueIris:
         self.password = password
         self.blueiris_session = -1
         self.response = -1
-        self.system_name = ""
+        self._name = ""
+        self._status = {"Unknown"}
         self.profile_list = []
         self.session = requests.session()
         self.debug = debug
         """Do login"""
         server = self.login()
         if len(server) > 0:
-            self.system_name = server[0]
+            self._name = server[0]
             self.profile_list = server[1]
 
     def update_response(self):
@@ -105,10 +106,14 @@ class BlueIris:
         self.response = hashlib.md5(
             "{}:{}:{}".format(self.user, self.blueiris_session, self.password).encode('utf-8')).hexdigest()
 
+    def update_status(self):
+        """Run the command to refresh our stored status"""
+        self._status = self.cmd("status")
+
     @property
     def name(self):
         """Return the system name"""
-        return self.system_name
+        return self._name
 
     @property
     def all_profiles(self):
@@ -135,18 +140,21 @@ class BlueIris:
 
     @property
     def status(self):
-        r = self.cmd("status")
-        return r
+        return self._status
 
     @property
     def profile(self):
+        if len(self.status) < 2:
+            return "Error"
         profile_id = int(self.status.get('profile'))
         if profile_id == -1:
-            return "undefined"
+            return "Undefined"
         return self.profile_list[profile_id]
 
     @property
     def signal(self):
+        if len(self.status) < 2:
+            return "Error"
         signal_id = int(self.status.get('signal'))
         return SIGNALS[signal_id]
 
@@ -169,6 +177,7 @@ class BlueIris:
         r = self.session.post(self.url, data=json.dumps(args))
         if r.status_code != 200:
             print("Unsuccessful response. {}:{}".format(r.status_code, r.text))
+            return dict()
 
         if self.debug:
             print(str(r.json()))
@@ -179,7 +188,7 @@ class BlueIris:
             """It's possible that there was no data to be returned. In that case respond 'None'"""
             if r.json()["result"] == "success":
                 return "None"
-            """Respond with 'Error' in the even we get here and had a bad result"""
+            """Respond with 'Error' in the event we get here and had a bad result"""
             return "Error"
 
     def login(self):
