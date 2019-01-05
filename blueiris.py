@@ -3,13 +3,9 @@ Python service library for talking to a BlueIris Server
 
 Modified from magapp/blueiriscmd
 """
-import logging
-
 import hashlib
 import json
 import requests
-
-_LOGGER = logging.getLogger(__name__)
 
 SIGNAL_RED = 'red'
 SIGNAL_YELLOW = 'yellow'
