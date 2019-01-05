@@ -109,25 +109,25 @@ class BlueIris:
         return self._system_name
 
     @property
-    def profiles_list(self):
+    def all_profiles(self):
         """Return the list of profiles"""
         return self._profiles_list
 
     @property
-    def camera_list(self):
-        """Return the list of profiles"""
+    def all_cameras(self):
+        """Request and return the camera list"""
         r = self.cmd("camlist")
         return r
 
     @property
-    def alert_list(self):
-        """Return the list of alert pictures"""
+    def all_alerts(self):
+        """Request and return the list of alert pictures"""
         r = self.cmd("alertlist", {"camera": "index"})
         return r
 
     @property
-    def clip_list(self):
-        """Return the list of alert pictures"""
+    def all_clips(self):
+        """Request and return the list of clips"""
         r = self.cmd("cliplist", {"camera": "index"})
         return r
 
@@ -137,14 +137,14 @@ class BlueIris:
         return r
 
     @property
-    def active_profile(self):
+    def profile(self):
         profile_id = int(self.status.get('profile'))
         if profile_id == -1:
-            return "Undefined"
+            return "undefined"
         return self._profiles_list[profile_id]
 
     @property
-    def active_signal(self):
+    def signal(self):
         signal_id = int(self.status.get('signal'))
         return SIGNALS[signal_id]
 
