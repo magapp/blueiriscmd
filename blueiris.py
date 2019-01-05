@@ -186,10 +186,7 @@ class BlueIris:
         """Request and return the camera list"""
         if self._camlist == UNKNOWN_LIST:
             self.update_camlist()
-        shortlist = []
-        for x in range (0, len(self._camcodes)):
-            shortlist.append({'name': self._camnames[x], 'code': self._camcodes[x]})
-        return
+        return dict(zip(self._camcodes, self._camnames))
 
     @property
     def all_alerts(self):
