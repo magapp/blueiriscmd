@@ -73,6 +73,16 @@ PTZ_PRESET_18 = 118
 PTZ_PRESET_19 = 119
 PTZ_PRESET_20 = 120
 
+PTZ_COMMANDS = [PTZ_PAN_LEFT, PTZ_PAN_RIGHT, PTZ_TILT_UP, PTZ_TILT_DOWN, PTZ_CENTER, PTZ_ZOOM_IN, PTZ_ZOOM_OUT,
+                PTZ_POWER_50, PTZ_POWER_60, PTZ_POWER_OUTDOOR, PTZ_BRIGHTNESS_0, PTZ_BRIGHTNESS_1, PTZ_BRIGHTNESS_2,
+                PTZ_BRIGHTNESS_3, PTZ_BRIGHTNESS_4, PTZ_BRIGHTNESS_5, PTZ_BRIGHTNESS_6, PTZ_BRIGHTNESS_7,
+                PTZ_BRIGHTNESS_8, PTZ_BRIGHTNESS_9, PTZ_BRIGHTNESS_10, PTZ_BRIGHTNESS_11, PTZ_BRIGHTNESS_12,
+                PTZ_BRIGHTNESS_13, PTZ_BRIGHTNESS_14, PTZ_BRIGHTNESS_15, PTZ_CONTRAST_0, PTZ_CONTRAST_1, PTZ_CONTRAST_2,
+                PTZ_CONTRAST_3, PTZ_CONTRAST_4, PTZ_CONTRAST_5, PTZ_CONTRAST_6, PTZ_IR_ON, PTZ_IR_OFF, PTZ_PRESET_1,
+                PTZ_PRESET_2, PTZ_PRESET_3, PTZ_PRESET_4, PTZ_PRESET_5, PTZ_PRESET_6, PTZ_PRESET_7, PTZ_PRESET_8,
+                PTZ_PRESET_9, PTZ_PRESET_10, PTZ_PRESET_11, PTZ_PRESET_12, PTZ_PRESET_13, PTZ_PRESET_14, PTZ_PRESET_15,
+                PTZ_PRESET_16, PTZ_PRESET_17, PTZ_PRESET_18, PTZ_PRESET_19, PTZ_PRESET_20]
+
 CONFIG_PAUSE_INDEFINITELY = -1
 CONFIG_PAUSE_CANCEL = 0
 CONFIG_PAUSE_ADD_30_SEC = 1
@@ -230,15 +240,22 @@ class BlueIris:
 
     def set_schedule(self, schedule_name):
         if schedule_name not in self._schedules:
-            print("Bad schedule name {}. (Use the .schedules property for a list of options)".format(schedule_name))
+            print("Bad schedule name {}. (Use one of {})".format(schedule_name, self._schedules))
         else:
             self.cmd("status", {"schedule": schedule_name})
 
     def toggle_schedule_hold(self):
+        """Toggle the schedule to run/hold"""
         self.cmd("status", {"schedule": -1})
 
-    def ptz(self, camera_code, ptz_action):
-        return
+    def ptz(self, camera_code, ptz_action: int):
+        """Execute a PTZ command on a camera"""
+        if camera_code not in self._camcodes:
+            print("Bad camera code {}. (Use one of {})".format(camera_code, self._camcodes))
+        elif ptz_action not in PTZ_COMMANDS:
+            print("Bad PTZ command {}. (Use the PTZ_ constants)".format(ptz_action))
+        else:
+            self.cmd("ptz", {"camera": camera_code, "button": ptz_action, "updown": 0})
 
     def logout(self):
         self.cmd("logout")
