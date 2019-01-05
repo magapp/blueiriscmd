@@ -257,6 +257,15 @@ class BlueIris:
         else:
             self.cmd("ptz", {"camera": camera_code, "button": ptz_action, "updown": 0})
 
+    def trigger(self, camera_code):
+        """Trigger the motion sensor on a specific camera"""
+        if not self._am_admin:
+            print("Need to be admin to run this command!")
+        elif camera_code not in self._camcodes:
+            print("Bad camera code {}. (Use one of {})".format(camera_code, self._camcodes))
+        else:
+            self.cmd("trigger", {"camera": camera_code})
+
     def logout(self):
         self.cmd("logout")
 
