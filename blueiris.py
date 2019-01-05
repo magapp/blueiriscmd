@@ -88,7 +88,7 @@ LOG_SEVERITY = [LOG_SEVERITY_INFO, LOG_SEVERITY_WARN, LOG_SEVERITY_ERROR]
 UNKNOWN_DICT = {'-1': ''}
 UNKNOWN_LIST = [{'-1': ''}]
 UNKNOWN_HASH = -1
-UNKNOWN_NAME = "noname"
+UNKNOWN_STRING = "noname"
 
 
 class BlueIris:
@@ -101,7 +101,6 @@ class BlueIris:
         self.password = password
         self.blueiris_session = UNKNOWN_HASH
         self.response = UNKNOWN_HASH
-        self._name = UNKNOWN_NAME
         self._status = UNKNOWN_DICT
         self._camlist = UNKNOWN_LIST
         self._alertlist = UNKNOWN_LIST
@@ -111,11 +110,17 @@ class BlueIris:
         self.session = requests.session()
         self.debug = debug
         """Do login"""
-        server = self.login()
-        if len(server) > 0:
-            self._name = server[0]
-            self._profiles = server[1]
-            self.update_status()
+        session_info = self.login()
+        if self.debug:
+            print("Session info: {}".format(session_info))
+        self._name = session_info.get('system name', default=UNKNOWN_STRING)
+        self._profiles = session_info.get('profiles', default=UNKNOWN_LIST)
+        self._am_admin = session_info.get('admin', default=False)
+        self._ptz_allowed = session_info.get('ptz', default=False)
+        self._clips_allowed = session_info.get('clips', default=False)
+        self._schedules = session_info.get('schedules', default=UNKNOWN_LIST)
+        self._version = session_info.get('version', default=UNKNOWN_STRING)
+        self.update_status()
 
     def generate_response(self):
         """Update self.username, self.password and self.blueiris_session before calling this."""
@@ -148,6 +153,11 @@ class BlueIris:
         return self._name
 
     @property
+    def version(self):
+        """Return the system version"""
+        return self._version
+
+    @property
     def log(self):
         """Return the system log"""
         if self._log == UNKNOWN_LIST:
@@ -158,6 +168,11 @@ class BlueIris:
     def profiles(self):
         """Return the list of profiles"""
         return self._profiles
+
+    @property
+    def schedules(self):
+        """Return the list of profiles"""
+        return self._schedules
 
     @property
     def cameras(self):
@@ -205,14 +220,41 @@ class BlueIris:
         return SIGNALS[signal_id]
 
     def set_signal(self, signal_name):
-        signal_id = SIGNALS.index(signal_name)
-        self.cmd("status", {"signal": signal_id})
+        if signal_name not in SIGNALS:
+            print("Unable to set signal to unknown value {}. (Use the SIGNAL_ constants)".format(signal_name))
+        else:
+            self.cmd("status", {"signal": SIGNALS.index(signal_name)})
 
     def set_schedule(self, schedule_name):
-        self.cmd("status", {"schedule": schedule_name})
+        if schedule_name not in self._schedules:
+            print("Bad schedule name {}. (Use the .schedules property for a list of options)".format(schedule_name))
+        else:
+            self.cmd("status", {"schedule": schedule_name})
+
+    def toggle_schedule_hold(self):
+        self.cmd("status", {"schedule": -1})
 
     def logout(self):
         self.cmd("logout")
+
+    def login(self):
+        """
+        Send hashed username/password to validate session
+        Returns system name and dictionary of profiles OR nothing
+        """
+        r = self.session.post(self.url, data=json.dumps({"cmd": "login"}))
+        if r.status_code != 200:
+            print("Bad response ({}) when trying to contact {}, {}".format(r.status_code, self.url, r.text))
+        else:
+            self.blueiris_session = r.json()["session"]
+            self.generate_response()
+            r = self.session.post(self.url,
+                                  data=json.dumps(
+                                      {"cmd": "login", "session": self.blueiris_session, "response": self.response}))
+            if r.status_code != 200 or r.json()["result"] != "success":
+                print("Bad login {} :{}".format(r.status_code, r.text))
+            else:
+                return r.json()["data"]
 
     def cmd(self, cmd, params=None):
         if params is None:
@@ -236,23 +278,3 @@ class BlueIris:
                 return "None"
             """Respond with 'Error' in the event we get here and had a bad result"""
             return "Error"
-
-    def login(self):
-        """
-        Send hashed username/password to validate session
-        Returns system name and dictionary of profiles OR nothing
-        """
-        r = self.session.post(self.url, data=json.dumps({"cmd": "login"}))
-        if r.status_code != 200:
-            print("Bad response ({}) when trying to contact {}, {}".format(r.status_code, self.url, r.text))
-        else:
-            self.blueiris_session = r.json()["session"]
-            self.generate_response()
-            r = self.session.post(self.url,
-                                  data=json.dumps(
-                                      {"cmd": "login", "session": self.blueiris_session, "response": self.response}))
-            if r.status_code != 200 or r.json()["result"] != "success":
-                print("Bad login {} :{}".format(r.status_code, r.text))
-            else:
-                return [r.json()["data"]["system name"], r.json()["data"]["profiles"]]
-        return []
