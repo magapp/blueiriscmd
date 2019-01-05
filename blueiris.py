@@ -73,6 +73,13 @@ PTZ_PRESET_18 = 118
 PTZ_PRESET_19 = 119
 PTZ_PRESET_20 = 120
 
+CONFIG_PAUSE_INDEFINITELY = -1
+CONFIG_PAUSE_CANCEL = 0
+CONFIG_PAUSE_ADD_30_SEC = 1
+CONFIG_PAUSE_ADD_1_MIN = 2
+CONFIG_PAUSE_ADD_1_HOUR = 3
+
+
 class BlueIris:
 
     def __init__(self, user, password, protocol, host, port="", debug=False):
