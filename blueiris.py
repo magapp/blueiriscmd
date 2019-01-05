@@ -198,5 +198,6 @@ class BlueIris:
                                       {"cmd": "login", "session": self.blueiris_session, "response": self.response}))
             if r.status_code != 200 or r.json()["result"] != "success":
                 print("Bad login {} :{}".format(r.status_code, r.text))
-                return []
-            return [r.json()["data"]["system name"], r.json()["data"]["profiles"]]
+            else:
+                return [r.json()["data"]["system name"], r.json()["data"]["profiles"]]
+        return []
