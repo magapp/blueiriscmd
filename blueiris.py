@@ -85,8 +85,8 @@ LOG_SEVERITY_ERROR = 'ERROR'
 
 LOG_SEVERITY = [LOG_SEVERITY_INFO, LOG_SEVERITY_WARN, LOG_SEVERITY_ERROR]
 
-UNKNOWN_STATUS = {"Unknown"}
-UNKNOWN_LIST = []
+UNKNOWN_DICT = {'state': 'Unknown'}
+UNKNOWN_LIST = ["Unknown"]
 UNKNOWN_HASH = -1
 UNKNOWN_NAME = "noname"
 
@@ -102,7 +102,7 @@ class BlueIris:
         self.blueiris_session = UNKNOWN_HASH
         self.response = UNKNOWN_HASH
         self._name = UNKNOWN_NAME
-        self._status = UNKNOWN_STATUS
+        self._status = UNKNOWN_DICT
         self._camlist = UNKNOWN_LIST
         self._alertlist = UNKNOWN_LIST
         self._cliplist = UNKNOWN_LIST
@@ -128,11 +128,11 @@ class BlueIris:
 
     def update_camlist(self):
         """Run the command to refresh our stored status"""
-        self._camlist = self.cmd("camlist", {"camera": "index"})
+        self._camlist = self.cmd("camlist")
 
     def update_cliplist(self):
         """Run the command to refresh our stored status"""
-        self._camlist = self.cmd("cliplist", {"camera": "index"})
+        self._cliplist = self.cmd("cliplist", {"camera": "index"})
 
     def update_alertlist(self):
         """Run the command to refresh our stored status"""
@@ -165,6 +165,7 @@ class BlueIris:
         if self._camlist == UNKNOWN_LIST:
             self.update_camlist()
         shortlist = []
+        cam: dict
         for cam in self._camlist:
             if cam.get('optionValue') != 'Index' and cam.get('optionValue') != '@Index':
                 shortlist.append({'name': cam.get('optionDisplay'), 'code': cam.get('optionValue')})
@@ -186,24 +187,22 @@ class BlueIris:
 
     @property
     def status(self):
-        if self._status == UNKNOWN_STATUS:
+        if self._status == UNKNOWN_DICT:
             self.update_status()
         return self._status
 
     @property
     def profile(self):
-        if len(self._status) < 2:
+        if len(self.status) < 2:
             return "Error"
-        profile_id = int(self._status.get('profile'))
+        profile_id = int(self.status.get('profile'))
         if profile_id == -1:
             return "Undefined"
         return self._profiles[profile_id]
 
     @property
     def signal(self):
-        if len(self.status) < 2:
-            return "Error"
-        signal_id = int(self.status.get('signal'))
+        signal_id = int(self.status.get('signal', default=4))
         return SIGNALS[signal_id]
 
     def set_signal(self, signal_name):
