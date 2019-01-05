@@ -240,13 +240,13 @@ class BlueIris:
 
     def set_schedule(self, schedule_name):
         if schedule_name not in self._schedules:
-            print("Bad schedule name {}. (Use one of {})".format(schedule_name, self._schedules))
+            print("Bad schedule name '{}'. (Use one of {})".format(schedule_name, self._schedules))
         else:
             self.cmd("status", {"schedule": schedule_name})
 
     def set_pofile(self, profile_name):
         if profile_name not in self._profiles:
-            print("Bad profile name {}. (Use one of {})".format(profile_name, self._profiles))
+            print("Bad profile name '{}'. (Use one of {})".format(profile_name, self._profiles))
         else:
             self.cmd("status", {"profile": profile_name})
 
@@ -257,7 +257,7 @@ class BlueIris:
     def ptz(self, camera_code, ptz_action: int):
         """Execute a PTZ command on a camera"""
         if camera_code not in self._camcodes:
-            print("Bad camera code {}. (Use one of {})".format(camera_code, self._camcodes))
+            print("Bad camera code '{}'. (Use one of {})".format(camera_code, self._camcodes))
         elif ptz_action not in PTZ_COMMANDS:
             print("Bad PTZ command {}. (Use the PTZ_ constants)".format(ptz_action))
         else:
@@ -268,7 +268,7 @@ class BlueIris:
         if not self._am_admin:
             print("Need to be admin to run this command!")
         elif camera_code not in self._camcodes:
-            print("Bad camera code {}. (Use one of {})".format(camera_code, self._camcodes))
+            print("Bad camera code '{}'. (Use one of {})".format(camera_code, self._camcodes))
         else:
             self.cmd("trigger", {"camera": camera_code})
 
