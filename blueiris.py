@@ -132,6 +132,7 @@ class LogSeverity(Enum):
 class BlueIris:
 
     def __init__(self, user, password, protocol, host, port="", debug=False):
+        """Define an abstract blue iris server."""
         if port != "":
             host = "{}:{}".format(host, port)
         self.url = "{}://{}/json".format(protocol, host)
@@ -149,7 +150,7 @@ class BlueIris:
         self._log = UNKNOWN_LIST
         self.session = requests.session()
         self.debug = debug
-        """Do login"""
+
         session_info = self.login()
         if self.debug:
             print("Session info: {}".format(session_info))
@@ -242,12 +243,14 @@ class BlueIris:
 
     @property
     def status(self):
+        """Return the last known status"""
         if self._status == UNKNOWN_DICT:
             self.update_status()
         return self._status
 
     @property
     def profile(self):
+        """Return the active profile"""
         profile_id = int(self.status.get('profile', -1))
         if profile_id == -1:
             return "Undefined"
@@ -255,12 +258,14 @@ class BlueIris:
 
     @property
     def signal(self):
+        """Return the active traffic signal"""
         signal_id = int(self.status.get('signal', -1))
         if signal_id == -1:
             return "Error"
         return Signal(signal_id)
 
     def set_signal(self, signal):
+        """Set the active traffic signal value"""
         if not Signal.has_value(signal):
             print("Unable to set signal to unknown value {}. (Use one of {})".format(signal,
                                                                                      Signal.__members__.keys()))
@@ -271,12 +276,14 @@ class BlueIris:
                 self.cmd("status", {"signal": signal})
 
     def set_schedule(self, schedule_name):
+        """Set the active schedule"""
         if schedule_name not in self._schedules:
             print("Bad schedule name '{}'. (Use one of {})".format(schedule_name, self._schedules))
         else:
             self.cmd("status", {"schedule": schedule_name})
 
     def set_pofile(self, profile_name):
+        """Set the active profile"""
         if profile_name not in self._profiles:
             print("Bad profile name '{}'. (Use one of {})".format(profile_name, self._profiles))
         else:
@@ -308,6 +315,7 @@ class BlueIris:
             self.cmd("trigger", {"camera": camera_code})
 
     def logout(self):
+        """Tell the server we're done with our session."""
         self.cmd("logout")
 
     def login(self):
@@ -330,6 +338,7 @@ class BlueIris:
                 return r.json()["data"]
 
     def cmd(self, cmd, params=None):
+        """Post a command to the server"""
         if params is None:
             params = dict()
         args = {"session": self.blueiris_session, "response": self.response, "cmd": cmd}
