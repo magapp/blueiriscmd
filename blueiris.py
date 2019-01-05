@@ -79,6 +79,11 @@ CONFIG_PAUSE_ADD_30_SEC = 1
 CONFIG_PAUSE_ADD_1_MIN = 2
 CONFIG_PAUSE_ADD_1_HOUR = 3
 
+UNKNOWN_STATUS = {"Unknown"}
+UNKNOWN_LIST = []
+UNKNOWN_HASH = -1
+UNKNOWN_NAME = "noname"
+
 
 class BlueIris:
 
@@ -88,20 +93,24 @@ class BlueIris:
         self.url = "{}://{}/json".format(protocol, host)
         self.user = user
         self.password = password
-        self.blueiris_session = -1
-        self.response = -1
-        self._name = ""
-        self._status = {"Unknown"}
-        self.profile_list = []
+        self.blueiris_session = UNKNOWN_HASH
+        self.response = UNKNOWN_HASH
+        self._name = UNKNOWN_NAME
+        self._status = UNKNOWN_STATUS
+        self._camlist = UNKNOWN_LIST
+        self._alertlist = UNKNOWN_LIST
+        self._cliplist = UNKNOWN_LIST
+        self._profiles = UNKNOWN_LIST
         self.session = requests.session()
         self.debug = debug
         """Do login"""
         server = self.login()
         if len(server) > 0:
             self._name = server[0]
-            self.profile_list = server[1]
+            self._profiles = server[1]
+            self.update_status()
 
-    def update_response(self):
+    def generate_response(self):
         """Update self.username, self.password and self.blueiris_session before calling this."""
         self.response = hashlib.md5(
             "{}:{}:{}".format(self.user, self.blueiris_session, self.password).encode('utf-8')).hexdigest()
@@ -110,46 +119,67 @@ class BlueIris:
         """Run the command to refresh our stored status"""
         self._status = self.cmd("status")
 
+    def update_camlist(self):
+        """Run the command to refresh our stored status"""
+        self._camlist = self.cmd("camlist", {"camera": "index"})
+
+    def update_cliplist(self):
+        """Run the command to refresh our stored status"""
+        self._camlist = self.cmd("cliplist", {"camera": "index"})
+
+    def update_alertlist(self):
+        """Run the command to refresh our stored status"""
+        self._alertlist = self.cmd("alertlist", {"camera": "index"})
+
     @property
     def name(self):
         """Return the system name"""
         return self._name
 
     @property
-    def all_profiles(self):
+    def profiles(self):
         """Return the list of profiles"""
-        return self.profile_list
+        return self._profiles
 
     @property
-    def all_cameras(self):
+    def cameras(self):
         """Request and return the camera list"""
-        r = self.cmd("camlist")
-        return r
+        if self._camlist == UNKNOWN_LIST:
+            self.update_camlist()
+        shortlist = []
+        for cam in self._camlist:
+            if cam.get('optionValue') != 'Index' and cam.get('optionValue') != '@Index':
+                shortlist.append({'name': cam.get('optionDisplay'), 'code': cam.get('optionValue')})
+        return shortlist
 
     @property
     def all_alerts(self):
         """Request and return the list of alert pictures"""
-        r = self.cmd("alertlist", {"camera": "index"})
-        return r
+        if self._alertlist == UNKNOWN_LIST:
+            self.update_alertlist()
+        return self._alertlist
 
     @property
     def all_clips(self):
         """Request and return the list of clips"""
-        r = self.cmd("cliplist", {"camera": "index"})
-        return r
+        if self._cliplist == UNKNOWN_LIST:
+            self.update_cliplist()
+        return self._cliplist
 
     @property
     def status(self):
+        if self._status == UNKNOWN_STATUS:
+            self.update_status()
         return self._status
 
     @property
     def profile(self):
-        if len(self.status) < 2:
+        if len(self._status) < 2:
             return "Error"
-        profile_id = int(self.status.get('profile'))
+        profile_id = int(self._status.get('profile'))
         if profile_id == -1:
             return "Undefined"
-        return self.profile_list[profile_id]
+        return self._profiles[profile_id]
 
     @property
     def signal(self):
@@ -201,7 +231,7 @@ class BlueIris:
             print("Bad response ({}) when trying to contact {}, {}".format(r.status_code, self.url, r.text))
         else:
             self.blueiris_session = r.json()["session"]
-            self.update_response()
+            self.generate_response()
             r = self.session.post(self.url,
                                   data=json.dumps(
                                       {"cmd": "login", "session": self.blueiris_session, "response": self.response}))
