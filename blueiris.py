@@ -112,7 +112,7 @@ class BlueIris:
         print "Connected to '%s'" % self.system_name
 
     def cmd(self, cmd, params=dict()):
-        args = {"session": self.session, "response": self.response, "cmd": cmd}
+        args = {"session": self.session, "cmd": cmd}
         args.update(params)
 
         # print self.url
