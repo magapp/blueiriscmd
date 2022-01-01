@@ -10,7 +10,7 @@ import requests, json, hashlib, sys, argparse
 def main():
     parser = argparse.ArgumentParser(description='Blue Iris controller', prog='blueiris')
 
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0 https://github.com/magapp/blueiris')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0 https://github.com/magapp/blueiriscmd')
     parser.add_argument("--host", help="Blue Iris host to connect to ", required=True)
     parser.add_argument('--user', help='User to use when connecting', required=True)
     parser.add_argument('--password', help='Password to use when connecting', required=True)
@@ -26,37 +26,37 @@ def main():
     args = parser.parse_args()
 
     bi = BlueIris(args.host, args.user, args.password, args.debug)
-    print "Profile '%s' is active" % bi.get_profile()
-    print "Schedule '%s' is active" % bi.get_schedule()
-    print "Signal is %s" % bi.get_signal()
+    print(f"Profile '{bi.get_profile()}' is active")
+    print(f"Schedule '{bi.get_schedule()}' is active")
+    print(f"Signal is {bi.get_signal()}")
 
     if args.list_profiles:
-        print "Available profiles are:"
-        print ", ".join(bi.profiles_list)
+        print("Available profiles are:")
+        print(", ".join(bi.profiles_list))
 
     if args.set_profile:
         try:
             profile_id = bi.profiles_list.index(args.set_profile)
         except:
-            print "Could not find any profile with that name. Use --list-profiles to see available profiles."
+            print("Could not find any profile with that name. Use --list-profiles to see available profiles.")
             sys.exit(0)
-        print "Setting active profile to '%s' (id: %d)" % (args.set_profile, profile_id)
+        print(f"Setting active profile to '{args.set_profile}' (id: {profile_id})")
         bi.cmd("status", {"profile": profile_id})
 
     if args.set_signal:
         signal = bi.get_signal()
-        print "Switching signal %s -> %s" % (signal, args.set_signal)
+        print(f"Switching signal {signal} -> {args.set_signal}")
         bi.set_signal(args.set_signal)
 
     if args.set_schedule:
         schedule = bi.get_schedule()
-        print "Switching schedule %s -> %s" % (schedule, args.set_schedule)
+        print(f"Switching schedule {schedule} -> {args.set_schedule}")
         bi.set_schedule(args.set_schedule)
 
     if args.trigger:
-        print "Triggering camera '%s'" % args.trigger
+        print(f"Triggering camera '{args.trigger}'")
         bi.cmd("trigger", {"camera": args.trigger})
-        
+
     if args.ptzbutton:
         #0: Pan left
         #1: Pan right
@@ -71,9 +71,9 @@ def main():
         #34..35: IR on, off
         #101..120: Go to preset position 1..20
         if not args.ptzcam:
-            print "Using --ptzcmdnum requires argument --ptzcam with valid Cam Name.."
+            print("Using --ptzcmdnum requires argument --ptzcam with valid Cam Name..")
             sys.exit(0)
-        print "Sending PTZ Command Button:" + args.ptzbutton + " to Cam: " + args.ptzcam
+        print(f"Sending PTZ Command Button: '{args.ptzbutton}' to Cam: '{args.ptzcam}'")
         bi.cmd("ptz", {"camera": args.ptzcam,"button": int(args.ptzbutton),"updown": 0})
 
     bi.logout()
@@ -92,37 +92,37 @@ class BlueIris:
         self.url = "http://"+host+"/json"
         r = requests.post(self.url, data=json.dumps({"cmd":"login"}))
         if r.status_code != 200:
-            print r.status_code
-            print r.text
+            print(r.status_code)
+            print(r.text)
             sys.exit(1)
 
         self.session = r.json()["session"]
-        self.response = hashlib.md5("%s:%s:%s" % (user, self.session, password)).hexdigest()
+        self.response = hashlib.md5(f"{user}:{self.session}:{password}".encode('utf-8')).hexdigest()
         if self.debug:
-            print "session: %s response: %s" % (self.session, self.response)
+            print(f"session: '{self.session}'' response: '{self.response}'")
 
         r = requests.post(self.url, data=json.dumps({"cmd":"login", "session": self.session, "response": self.response}))
         if r.status_code != 200 or r.json()["result"] != "success":
-            print r.status_code
-            print r.text
+            print(r.status_code)
+            print(r.text)
             sys.exit(1)
         self.system_name = r.json()["data"]["system name"]
         self.profiles_list = r.json()["data"]["profiles"]
 
-        print "Connected to '%s'" % self.system_name
+        print(f"Connected to '{self.system_name}'")
 
     def cmd(self, cmd, params=dict()):
         args = {"session": self.session, "cmd": cmd}
         args.update(params)
 
-        # print self.url
-        # print "Sending Data: "
-        # print json.dumps(args)
+        # print(self.url)
+        # print("Sending Data: ")
+        # print(json.dumps(args))
         r = requests.post(self.url, data=json.dumps(args))
 
         if r.status_code != 200:
-            print r.status_code
-            print r.text
+            print(r.status_code)
+            print(r.text)
             sys.exit(1)
         else:
             pass
@@ -130,7 +130,7 @@ class BlueIris:
             #print r.text
 
         if self.debug:
-            print str(r.json())
+            print(str(r.json()))
 
         try:
             return r.json()["data"]
