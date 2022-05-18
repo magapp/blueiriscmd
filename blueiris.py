@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Print debug messages')
     parser.add_argument('--list-profiles', action='store_true', help='List all available profiles')
     parser.add_argument('--set-profile', action='store', help='Set current profile', metavar='profile-name', default=None)
+    parser.add_argument('--get-profile', action='store_true', help='Get current profile', default=False)
     parser.add_argument('--set-schedule', action='store', help='Set current schedule', metavar='schedule-name', default=None)
     parser.add_argument('--set-signal', action='store', help='Set current signal', metavar='signal-name', default=None, choices=['red','yellow','green'])
     parser.add_argument('--trigger', action='store', help='Trigger camera', metavar='camera-short-name', default=None)
@@ -26,6 +27,11 @@ def main():
     args = parser.parse_args()
 
     bi = BlueIris(args.host, args.user, args.password, args.debug)
+
+    if args.get_profile:
+        print(bi.get_profile())
+        sys.exit(0)
+
     print("Profile '%s' is active" % bi.get_profile())
     print("Schedule '%s' is active" % bi.get_schedule())
     print("Signal is %s" % bi.get_signal())
@@ -109,7 +115,8 @@ class BlueIris:
         self.system_name = r.json()["data"]["system name"]
         self.profiles_list = r.json()["data"]["profiles"]
 
-        print("Connected to '%s'" % self.system_name)
+        if debug:
+            print("Connected to '%s'" % self.system_name)
 
     def cmd(self, cmd, params=dict()):
         args = {"session": self.session, "cmd": cmd}
